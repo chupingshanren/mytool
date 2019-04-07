@@ -1,0 +1,83 @@
+cd C:\Users\22129\newpackage\mysql-8.0.15-winx64\bin
+1. 先进入数据库 mysql -uroot -p
+net start mysql
+
+2. 创建一个新的数据库 create database xxx
+
+show databases;
+
+查看多少个数据库，database 后面带 "s"
+
+use "database", 使用该数据库
+
+show tables ; 查看当前库下有哪些表
+drop table 表名 [,表名2…], 可以同时删除多个数据表 
+
+show columns from city; 查看表下面那些列
+
+更便捷方式 是 describe city; 
+
+import pymysql
+ 
+# 连接数据库
+connect = pymysql.Connect(
+    host='localhost',
+    port=3306,
+    user='root',
+    passwd='1234',
+    db='save',
+    charset='utf8'
+)
+ 
+# 获取游标
+cursor = connect.cursor()
+ 
+# 插入数据
+sql = "INSERT INTO money (name, account, saving) VALUES ( '%s', '%s', %.2f )"
+data = ('雷军', '13512345678', 10000)
+cursor.execute(sql % data)
+connect.commit()
+print('成功插入', cursor.rowcount, '条数据')
+ 
+# 修改数据
+sql = "UPDATE money SET saving = %.2f WHERE account = '%s' "
+data = (8888, '13512345678')
+cursor.execute(sql % data)
+connect.commit()
+print('成功修改', cursor.rowcount, '条数据')
+ 
+# 查询数据
+sql = "SELECT name,saving FROM money WHERE account = '%s' "
+data = ('13512345678',)
+cursor.execute(sql % data)
+for row in cursor.fetchall():
+    print("Name:%s\tSaving:%.2f" % row)
+print('共查找出', cursor.rowcount, '条数据')
+ 
+# 删除数据
+sql = "DELETE FROM money  WHERE account = '%s' LIMIT %d"
+data = ('13512345678', 1)
+cursor.execute(sql % data)
+connect.commit()
+print('成功删除', cursor.rowcount, '条数据')
+ 
+# 事务处理
+sql_1 = "UPDATE money SET saving = saving + 1000 WHERE account = '18012345678' "
+sql_2 = "UPDATE money SET expend = expend + 1000 WHERE account = '18012345678' "
+sql_3 = "UPDATE money SET income = income + 2000 WHERE account = '18012345678' "
+ 
+try:
+    cursor.execute(sql_1)  # 储蓄增加1000
+    cursor.execute(sql_2)  # 支出增加1000
+    cursor.execute(sql_3)  # 收入增加2000
+except Exception as e:
+    connect.rollback()  # 事务回滚
+    print('事务处理失败', e)
+else:
+    connect.commit()  # 事务提交
+    print('事务处理成功', cursor.rowcount)
+ 
+# 关闭连接
+cursor.close()
+connect.close()
+
